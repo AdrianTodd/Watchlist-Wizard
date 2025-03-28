@@ -63,9 +63,7 @@ def parse_movie_page(html, movie_url):
             movie_data['runtime'] = None
             movie_data['age_restriction'] = None
 
-
-
-        print(f"movie_data: {movie_data}")
+        # print(f"movie_data: {movie_data}")
 
         # IMDB Rating
         rating_wrapper = soup.find('div', {"data-testid": "hero-rating-bar__aggregate-rating__score"})
@@ -113,9 +111,9 @@ def parse_movie_page(html, movie_url):
 
         # Genres
         genres = []
-        genre_section = soup.find('div', {'data-testid': 'genres'})
+        genre_section = soup.find('div', class_ = 'ipc-chip-list__scroller')
         if genre_section:
-            genre_tags = genre_section.find_all('a', class_="ipc-chip")
+            genre_tags = genre_section.find_all('span', class_="ipc-chip__text")
             for tag in genre_tags:
                 genres.append(tag.text.strip())
         movie_data['genres'] = genres
@@ -125,21 +123,29 @@ def parse_movie_page(html, movie_url):
         seen_people = set()
         credits = soup.find_all('li', {'data-testid': 'title-pc-principal-credit'})
         for credit in credits:
-            label = credit.find('span', {'class': 'ipc-metadata-list-item__label ipc-metadata-list-item__label--btn'})
-            if label and (label.text.strip() == 'Director' or label.text.strip() == 'Writers' or label.text.strip() == 'Stars'):
-                role = label.text.strip()
-                if role == "Writers":
-                    role = "Writer"
-                if role == "Stars":
-                    role = "Actor"
-                name_tags = credit.find_all('a', {'class': 'ipc-metadata-list-item__list-content-item ipc-metadata-list-item__list-content-item--link'})
-                for name_tag in name_tags:
-                    person_id = name_tag.get('href').split('/')[2]
-                    name = name_tag.text.strip()
-                    if (person_id, role) not in seen_people:
-                        people.append({'person_id': person_id, 'name': name, 'role': role})
-                        seen_people.add((person_id, role))
+            label_span = credit.find('a', class_='ipc-metadata-list-item__label')
+            if label_span:
+                label = label_span.get_text(strip=True)
+                role = None  # Initialize role
+                if label == 'Director' or label == 'Directors':
+                    role = 'Director'
+                elif label == 'Writer' or label == 'Writers':
+                    role = 'Writer'
+                elif label == 'Stars' or label == 'Star':
+                    role = 'Actor'  # Always use 'Actor'
+
+                if role:  # Only proceed if a valid role was found
+                    name_links = credit.find_all('a', class_='ipc-metadata-list-item__list-content-item ipc-metadata-list-item__list-content-item--link')
+                    for name_link in name_links:
+                        person_id = name_link['href'].split('/')[2]
+                        name = name_link.get_text(strip=True)
+                        #print(f"person_id: {person_id}, name: {name}, role: {role}")
+                        if (person_id, role) not in seen_people: # Use tuple for uniqueness
+                            people.append({'person_id': person_id, 'name': name, 'role': role})
+                            seen_people.add((person_id, role))  # Add to seen_people
+
         movie_data['people'] = people
+        #print(f"people: {people}")
 
         # Plot Keywords
         if movie_data['plot_summary']:
@@ -161,36 +167,39 @@ def parse_person_page(html):
 
     try:
         # Name
-        name_tag = soup.find('span', class_="sc-b45a5631-1 hjhOdL")
+        name_tag = soup.find('span', class_="hero__primary-text")
         person_data['name'] = name_tag.text.strip() if name_tag else None
 
-        # IMDb ID (extract from URL)
+        # # IMDb ID (extract from URL)
         match = re.search(r'/name/(nm\d+)/', html)
         person_data['imdb_id'] = match.group(1) if match else None
 
         # Birth Date
-        birthdate_tag = soup.find('li', {'data-testid': 'person-birthdate'})
+        birthdate_tag = soup.find('div', class_="sc-59a43f1c-1 dOuYzr")
         if birthdate_tag:
-            date_text = birthdate_tag.find('a').text.strip()
+            date_text = birthdate_tag.find_all('span', class_="sc-59a43f1c-2 bMLVWg")
             try:
-                date_parts = date_text.split('(')[0].strip().split()
-                if len(date_parts) == 3:
-                    month, day, year = date_parts
-                    date = datetime.strptime(f"{month} {day} {year}", "%B %d, %Y").strftime("%Y-%m-%d")
-                elif len(date_parts) == 2:
-                    month, year = date_parts
-                    date = datetime.strptime(f"{month} {year}", "%B %Y").strftime("%Y-%m-01")
-                elif len(date_parts) == 1:
-                    date = datetime.strptime(date_parts[0], "%Y").strftime("%Y-01-01")
-                person_data['birth_date'] = date
+                for date in date_text:
+                    if date != "Born":
+                        date_text = date.text.strip()
+                        date_parts = date_text.split('(')[0].strip().split()
+                        if len(date_parts) == 3:
+                            month, day, year = date_parts
+                            date = datetime.strptime(f"{month} {day} {year}", "%B %d, %Y").strftime("%Y-%m-%d")
+                            person_data['birth_date'] = date
+                        elif len(date_parts) == 2:
+                            month, year = date_parts
+                            date = datetime.strptime(f"{month} {year}", "%B %Y").strftime("%Y-%m-01")
+                
             except (ValueError, IndexError):
                 person_data['birth_date'] = None
         else:
             person_data['birth_date'] = None
 
         # Bio
-        bio_tag = soup.find('p', class_="sc-ae7955ff-6 hPWJmE")
-        person_data['bio'] = bio_tag.text.strip() if bio_tag else None
+        bio_tag = soup.find('div', class_="ipc-html-content-inner-div")
+        person_data['bio'] = bio_tag.text.strip() #if bio_tag else None
+        print(f"bio: {person_data['bio']}")
 
         # Filmography (Movie IMDb IDs)
         filmography = []

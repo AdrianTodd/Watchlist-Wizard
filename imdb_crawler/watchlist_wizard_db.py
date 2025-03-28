@@ -222,22 +222,35 @@ def insert_person_data(person_data):
             database=config.DB_NAME
         )
         cursor = conn.cursor()
-
-        # Insert person (using IMDbID and Name for uniqueness)
-        cursor.execute("""
-            INSERT IGNORE INTO People (IMDbID, Name, BirthDate, Bio)
-            VALUES (%s, %s, %s, %s)
-        """, (person_data.get('imdb_id'), person_data['name'], person_data.get('birth_date'), person_data.get('bio')))
-        conn.commit()
-
-        # Get the PersonID (select based on IMDbID and Name)
-        cursor.execute("SELECT PersonID FROM People WHERE IMDbID = %s AND Name = %s", (person_data.get('imdb_id'), person_data['name']))
-        result = cursor.fetchone()
-        if result:
-            person_id = result[0]
+        
+        # Check if the person already exists
+        cursor.execute("SELECT IMDbID FROM people WHERE IMDbID = %s", (person_data['imdb_id'],))
+        existing_person = cursor.fetchone()
+        if existing_person:
+            imdb_id = existing_person[0]
+            print(f"Person already exists (ID: {imdb_id}). Updating...")
+            #print(f"person_data: {person_data}")
+            # UPDATE the existing person
+            cursor.execute("""
+                           UPDATE people
+                           SET Name = %s, BirthDate = %s, Bio = %s
+                           WHERE IMDbID = %s""", (person_data['name'], person_data['birth_date'], person_data['bio'], imdb_id))
         else:
-            print(f"Error: Could not retrieve PersonID for {person_data['name']}")
-            return  # Exit if PersonID not found
+            # Insert person (using IMDbID and Name for uniqueness)
+            cursor.execute("""
+                INSERT IGNORE INTO People (IMDbID, Name, BirthDate, Bio)
+                VALUES (%s, %s, %s, %s)
+            """, (person_data.get('imdb_id'), person_data['name'], person_data.get('birth_date'), person_data.get('bio')))
+            conn.commit()
+
+            # Get the PersonID (select based on IMDbID and Name)
+            cursor.execute("SELECT PersonID FROM People WHERE IMDbID = %s AND Name = %s", (person_data.get('imdb_id'), person_data['name']))
+            result = cursor.fetchone()
+            if result:
+                person_id = result[0]
+            else:
+                print(f"Error: Could not retrieve PersonID for {person_data['name']}")
+                return  # Exit if PersonID not found
 
     except mysql.connector.Error as err:
         print(f"Database error (person insertion): {err}")
