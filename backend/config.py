@@ -7,7 +7,6 @@ START_URL = "https://www.imdb.com/chart/top/?ref_=nv_mv_250"
 DELAY = 2
 MAX_PAGES = 30
 
-
 # Database Config
 load_dotenv()
 DB_HOST = os.getenv('DB_HOST')

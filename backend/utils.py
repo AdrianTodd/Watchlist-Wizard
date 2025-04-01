@@ -1,20 +1,18 @@
-import re
 import urllib.robotparser
-import nltk
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from collections import Counter
 
 
 rp = urllib.robotparser.RobotFileParser()
-rp.set_url("https://www.imdb.com/robots.txt")  # No need for BASE_URL here
+rp.set_url("https://www.imdb.com/robots.txt")
 rp.read()
 
 def can_fetch(url):
     return rp.can_fetch("*", url)
 
 def extract_keywords(text, num_keywords=10):
-    """Extracts keywords from text using NLTK."""
+    """Extracts keywords from a text using NLTK."""
     tokens = word_tokenize(text.lower())  # Tokenize and lowercase
     tokens = [t for t in tokens if t.isalnum()]  # Remove punctuation
     tokens = [t for t in tokens if t not in stopwords.words('english')]  # Remove stopwords

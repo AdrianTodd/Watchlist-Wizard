@@ -1,5 +1,5 @@
 import mysql.connector
-from backend import config
+import config 
 
 def get_db_connection():
     """Establishes and returns a database connection."""
