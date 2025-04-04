@@ -5,6 +5,7 @@ import Link from "next/link";
 import { MovieListItem } from "../types";
 import MovieImage from "../components/MovieImage";
 import axios from "axios"; // Using axios for easier query param handling
+import Image from "next/image";
 
 function useDebounce(value: string, delay: number) {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -91,7 +92,25 @@ export default function HomePage(): JSX.Element {
 
   return (
     <div>
-      <h1 className='text-center mb-8'>Search & Filter Movies</h1>
+      <div className='flex items-center justify-left gap-4 m-8 pt-8'>
+        {" "}
+        {/* Added gap */}
+        {/* Image (adjust width/height) */}
+        <Image
+          src='/hero-banner.jpg' // Your image path in /public
+          alt='Watchlist Wizard Logo' // More specific alt text
+          width={200} // Example smaller width
+          height={200} // Example smaller height (adjust for aspect ratio)
+          className='rounded-lg shadow-md flex-shrink-0' // Prevent shrinking if text is long
+          priority
+        />
+        {/* Title */}
+        <h1 className='text-3xl sm:text-4xl font-bold text-gray-300'>
+          {" "}
+          {/* Adjusted size */}
+          Watchlist Wizard
+        </h1>
+      </div>
 
       {/* Filter Controls */}
       <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 p-4 bg-[#181818] text-gray-300 rounded shadow'>
@@ -106,7 +125,7 @@ export default function HomePage(): JSX.Element {
           <input
             type='text'
             id='search'
-            placeholder='e.g., prison, redemption'
+            placeholder='e.g., lost, redemption'
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
             className='w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500'

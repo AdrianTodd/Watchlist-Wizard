@@ -36,12 +36,12 @@ def crawl():
 
         html = None
         # Comment out for demo so that you can see the different pages being crawled.
-        # if "chart/top" in url: # Selenium is needed to navigate the Top 250 list page due to dynamic content loading otherwise only the first 25 movies are fetched
-        #      print("  Using Selenium to fetch list page...")
-        #      html = imdb_parser.fetch_page_with_selenium(url)
-        # else: # Use regular requests for movie/person detail pages, Selenium is not needed here
-        print("  Using requests to fetch page...")
-        html = imdb_parser.fetch_page(url)
+        if "chart/top" in url: # Selenium is needed to navigate the Top 250 list page due to dynamic content loading otherwise only the first 25 movies are fetched
+            print("  Using Selenium to fetch list page...")
+            html = imdb_parser.fetch_page_with_selenium(url)
+        else: # Use regular requests for movie/person detail pages, Selenium is not needed here
+            print("  Using requests to fetch page...")
+            html = imdb_parser.fetch_page(url)
 
         if not html:
             print(f"Failed to fetch HTML for URL: {url} --- Skipping.")
