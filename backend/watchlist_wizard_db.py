@@ -293,7 +293,7 @@ def insert_person_data(person_data):
         if conn and conn.is_connected():
             conn.close()
 
-def get_all_movies(limit=250, offset=0, search_term=None, genre_filter=None, keyword_filter=None, actor_filter=None):
+def get_all_movies(limit=1000, offset=0, search_term=None, genre_filter=None, keyword_filter=None, actor_filter=None):
     """Fetches a list of movies with pagination and filtering."""
     conn = get_db_connection()
     if not conn:
